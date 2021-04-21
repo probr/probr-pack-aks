@@ -17,7 +17,7 @@ func eval(functionName string) (err error) {
 	// false = return new err
 	// err = return err
 
-	regoFilePath := probeengine.GetFilePath("internal", "azure", "aks", "general.rego")
+	regoFilePath := probeengine.GetFilePath("internal", "azure", "aks", "aks.rego")
 	var r bool
 
 	r, err = opa.Eval(regoFilePath, opaPackageName, functionName, &aksJson)
@@ -27,7 +27,7 @@ func eval(functionName string) (err error) {
 	}
 
 	if r == false {
-		err = fmt.Errorf("Rego function %s returned an error", functionName)
+		err = fmt.Errorf("Rego function %s returned result of 'non-compliant'", functionName)
 	} else {
 		err = nil
 	}
@@ -127,5 +127,65 @@ func (scenario *scenarioState) theKubernetesWebUIIsDisabled() (err error) {
 	stepTrace.WriteString("Use OPA to evaluate whether Kube Dashboard is enabled on this cluster; ")
 
 	err = eval("kube_dashboard")
+	return
+}
+
+func (scenario *scenarioState) privateClusterIsEnabled() (err error) {
+	var stepTrace strings.Builder
+
+	stepTrace, payload, err := utils.AuditPlaceholders()
+	defer func() {
+		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+	}()
+
+	payload = struct {
+		Placeholder string
+	}{
+		"placeholder",
+	}
+
+	stepTrace.WriteString("Use OPA to evaluate whether Private Cluster is enabled on this cluster; ")
+
+	err = eval("private_cluster")
+	return
+}
+
+func (scenario *scenarioState) networkOutboundType() (err error) {
+	var stepTrace strings.Builder
+
+	stepTrace, payload, err := utils.AuditPlaceholders()
+	defer func() {
+		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+	}()
+
+	payload = struct {
+		Placeholder string
+	}{
+		"placeholder",
+	}
+
+	stepTrace.WriteString("Use OPA to evaluate whether Network Outbound type is set to user defined; ")
+
+	err = eval("network_outbound_type")
+	return
+}
+
+func (scenario *scenarioState) diskEncryption() (err error) {
+	var stepTrace strings.Builder
+
+	stepTrace, payload, err := utils.AuditPlaceholders()
+	defer func() {
+		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+	}()
+
+	payload = struct {
+		Placeholder string
+	}{
+		"placeholder",
+	}
+
+	stepTrace.WriteString("Use OPA to evaluate whether a disk encryption set is configured; ")
+
+	err = eval("disk_encryption")
 	return
 }

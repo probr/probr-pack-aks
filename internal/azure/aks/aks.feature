@@ -11,3 +11,12 @@ Feature: General cluster Security best practices
 
     Scenario:
        Then Azure AD integration is enabled
+
+    Scenario:
+      Then Private Cluster is enabled
+
+    Scenario:
+      Then Disk Encryption is enabled
+
+    Scenario:
+      Then outbound network routing is user controlled

@@ -23,5 +23,5 @@ func init() {
 	// This line will ensure that all static files are bundled into pked.go file when using pkger cli tool
 	// See: https://github.com/markbates/pkger
 	pkger.Include("/internal/azure/aks/aks.feature")
-	pkger.Include("/internal/azure/aks/general.rego")
+	pkger.Include("/internal/azure/aks/aks.rego")
 }
