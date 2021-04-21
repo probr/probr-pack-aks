@@ -1,0 +1,138 @@
+package azureaks
+
+import (
+	"fmt"
+	//"github.com/citihub/probr-sdk/audit"
+	"github.com/citihub/probr-sdk/probeengine"
+	"github.com/citihub/probr-sdk/probeengine/opa"
+	"github.com/citihub/probr-sdk/utils"
+
+	//"github.com/cucumber/godog"
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
+)
+
+const opaPackageName = "aks"
+
+func eval(functionName string) (err error) {
+	// true = return nil
+	// false = return new err
+	// err = return err
+
+	regoFilePath := probeengine.GetFilePath("internal", "azure", "aks", "general.rego")
+	var r bool
+
+	r, err = opa.Eval(regoFilePath, opaPackageName, functionName, &aksJson)
+
+	if err != nil {
+		return
+	}
+
+	if r == false {
+		err = fmt.Errorf("Rego function %s returned an error", functionName)
+	} else {
+		err = nil
+	}
+	return
+}
+
+func loadJSON() (err error) {
+	aksJSONFP := probeengine.GetFilePath("internal", "azure", "aks", "aks.json")
+	jsonFile, err := os.Open(aksJSONFP)
+	if err != nil {
+		log.Printf("Error opening %s", aksJSONFP)
+		return
+	}
+	log.Printf("Successfully Opened aks.json")
+	// defer the closing of our jsonFile so that we can parse it later on
+	defer jsonFile.Close()
+
+	aksJson, err = ioutil.ReadAll(jsonFile)
+	return
+}
+
+func (scenario *scenarioState) anAzureKubernetesClusterWeCanReadTheConfigurationOf() (err error) {
+	var stepTrace strings.Builder
+
+	stepTrace, payload, err := utils.AuditPlaceholders()
+	defer func() {
+		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+	}()
+
+	payload = struct {
+		Placeholder string
+	}{
+		"placeholder",
+	}
+
+	stepTrace.WriteString("Get the configuration of the AKS cluster; ")
+
+	err = loadJSON()
+
+	if len(aksJson) == 0 {
+		err = fmt.Errorf("aksJson empty")
+	}
+	return
+}
+
+func (scenario *scenarioState) azureADIntegrationIsEnabled() (err error) {
+	var stepTrace strings.Builder
+
+	stepTrace, payload, err := utils.AuditPlaceholders()
+	defer func() {
+		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+	}()
+
+	payload = struct {
+		Placeholder string
+	}{
+		"placeholder",
+	}
+
+	stepTrace.WriteString("Use OPA to evaluate whether RBAC is enabled on this cluster; ")
+
+	err = eval("enable_rbac")
+	return
+}
+
+func (scenario *scenarioState) azurePolicyIsEnabled() (err error) {
+	var stepTrace strings.Builder
+
+	stepTrace, payload, err := utils.AuditPlaceholders()
+	defer func() {
+		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+	}()
+
+	payload = struct {
+		Placeholder string
+	}{
+		"placeholder",
+	}
+
+	stepTrace.WriteString("Use OPA to evaluate whether Azure Policy is enabled on this cluster; ")
+
+	err = eval("azure_policy")
+	return
+}
+
+func (scenario *scenarioState) theKubernetesWebUIIsDisabled() (err error) {
+	var stepTrace strings.Builder
+
+	stepTrace, payload, err := utils.AuditPlaceholders()
+	defer func() {
+		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+	}()
+
+	payload = struct {
+		Placeholder string
+	}{
+		"placeholder",
+	}
+
+	stepTrace.WriteString("Use OPA to evaluate whether Kube Dashboard is enabled on this cluster; ")
+
+	err = eval("kube_dashboard")
+	return
+}
