@@ -2,15 +2,11 @@ package azureaks
 
 import (
 	"fmt"
-	//"github.com/citihub/probr-sdk/audit"
 	"github.com/citihub/probr-sdk/probeengine"
 	"github.com/citihub/probr-sdk/probeengine/opa"
 	"github.com/citihub/probr-sdk/utils"
-
-	//"github.com/cucumber/godog"
-	"io/ioutil"
 	"log"
-	"os"
+
 	"strings"
 )
 
@@ -39,17 +35,10 @@ func eval(functionName string) (err error) {
 }
 
 func loadJSON() (err error) {
-	aksJSONFP := probeengine.GetFilePath("internal", "azure", "aks", "aks.json")
-	jsonFile, err := os.Open(aksJSONFP)
-	if err != nil {
-		log.Printf("Error opening %s", aksJSONFP)
-		return
-	}
-	log.Printf("Successfully Opened aks.json")
-	// defer the closing of our jsonFile so that we can parse it later on
-	defer jsonFile.Close()
-
-	aksJson, err = ioutil.ReadAll(jsonFile)
+	// TODO: make this configurable
+	aksJson, err = azConnection.GetManagedClusterJSON("probr-demo-rg", "probr-demo-cluster")
+	s := string(aksJson)
+	log.Printf("[DEBUG] AKS JSON: %v", s)
 	return
 }
 
@@ -70,6 +59,10 @@ func (scenario *scenarioState) anAzureKubernetesClusterWeCanReadTheConfiguration
 	stepTrace.WriteString("Get the configuration of the AKS cluster; ")
 
 	err = loadJSON()
+	if err != nil {
+		log.Printf("Error loading JSON: %v", err)
+		return
+	}
 
 	if len(aksJson) == 0 {
 		err = fmt.Errorf("aksJson empty")

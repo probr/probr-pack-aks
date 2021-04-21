@@ -2,19 +2,14 @@ package azureaks
 
 import (
 	"context"
-	//"fmt"
 	"log"
-	//"strings"
 
-	//"github.com/Azure/go-autorest/autorest"
-	//"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/cucumber/godog"
 
 	"github.com/citihub/probr-sdk/audit"
 	"github.com/citihub/probr-sdk/probeengine"
-	//azureutil "github.com/citihub/probr-sdk/providers/azure"
-	//"github.com/citihub/probr-sdk/providers/azure/connection"
-	//"github.com/citihub/probr-sdk/utils"
+	azureutil "github.com/citihub/probr-sdk/providers/azure"
+	"github.com/citihub/probr-sdk/providers/azure/connection"
 )
 
 type scenarioState struct {
@@ -34,6 +29,7 @@ type probeStruct struct {
 var Probe probeStruct
 var scenario scenarioState // Local container of scenario state
 var aksJson []byte
+var azConnection connection.Azure // Provides functionality to interact with Azure
 
 func beforeScenario(s *scenarioState, probeName string, gs *godog.Scenario) {
 	s.name = gs.Name
@@ -59,17 +55,14 @@ func (probe probeStruct) ProbeInitialize(ctx *godog.TestSuiteContext) {
 
 	ctx.BeforeSuite(func() {
 
-		// Initialize connections to CSP here
+		azConnection = connection.NewAzureConnection(
+			context.Background(),
+			azureutil.SubscriptionID(),
+			azureutil.TenantID(),
+			azureutil.ClientID(),
+			azureutil.ClientSecret(),
+		)
 
-		/*
-			azConnection = connection.NewAzureConnection(
-				context.Background(),
-				azureutil.SubscriptionID(),
-				azureutil.TenantID(),
-				azureutil.ClientID(),
-				azureutil.ClientSecret(),
-			)
-		*/
 	})
 
 	ctx.AfterSuite(func() {
@@ -107,7 +100,6 @@ func (probe probeStruct) ScenarioInitialize(ctx *godog.ScenarioContext) {
 func afterScenario(scenario scenarioState, probe probeStruct, gs *godog.Scenario, err error) {
 
 	teardown()
-
 	probeengine.LogScenarioEnd(gs)
 }
 

@@ -9,6 +9,8 @@ import (
 
 // GetProbes returns a list of probe objects
 func GetProbes() []probeengine.Probe {
+	// TODO: make this configurable
+
 	/*if config.Vars.ServicePacks.AKS.IsExcluded() {
 		return nil
 	}*/
@@ -22,5 +24,4 @@ func init() {
 	// See: https://github.com/markbates/pkger
 	pkger.Include("/internal/azure/aks/aks.feature")
 	pkger.Include("/internal/azure/aks/general.rego")
-	pkger.Include("/internal/azure/aks/aks.json")
 }
