@@ -70,7 +70,7 @@ func (scenario *scenarioState) anAzureKubernetesClusterWeCanReadTheConfiguration
 	return
 }
 
-func (scenario *scenarioState) azureADIntegrationIsEnabled() (err error) {
+func opaProbe(opaFuncName string, scenario *scenarioState) (err error) {
 	var stepTrace strings.Builder
 
 	stepTrace, payload, err := utils.AuditPlaceholders()
@@ -84,108 +84,32 @@ func (scenario *scenarioState) azureADIntegrationIsEnabled() (err error) {
 		"placeholder",
 	}
 
-	stepTrace.WriteString("Use OPA to evaluate whether RBAC is enabled on this cluster; ")
+	stepTrace.WriteString("Use OPA to evaluate this cluster; ")
 
-	err = eval("enable_rbac")
+	err = eval(opaFuncName)
 	return
 }
 
-func (scenario *scenarioState) azurePolicyIsEnabled() (err error) {
-	var stepTrace strings.Builder
-
-	stepTrace, payload, err := utils.AuditPlaceholders()
-	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
-	}()
-
-	payload = struct {
-		Placeholder string
-	}{
-		"placeholder",
-	}
-
-	stepTrace.WriteString("Use OPA to evaluate whether Azure Policy is enabled on this cluster; ")
-
-	err = eval("azure_policy")
-	return
+func (scenario *scenarioState) azurePolicyIsEnabled() error {
+	return opaProbe("azure_policy", scenario)
 }
 
-func (scenario *scenarioState) theKubernetesWebUIIsDisabled() (err error) {
-	var stepTrace strings.Builder
-
-	stepTrace, payload, err := utils.AuditPlaceholders()
-	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
-	}()
-
-	payload = struct {
-		Placeholder string
-	}{
-		"placeholder",
-	}
-
-	stepTrace.WriteString("Use OPA to evaluate whether Kube Dashboard is enabled on this cluster; ")
-
-	err = eval("kube_dashboard")
-	return
+func (scenario *scenarioState) azureADIntegrationIsEnabled() error {
+	return opaProbe("enable_rbac", scenario)
 }
 
-func (scenario *scenarioState) privateClusterIsEnabled() (err error) {
-	var stepTrace strings.Builder
-
-	stepTrace, payload, err := utils.AuditPlaceholders()
-	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
-	}()
-
-	payload = struct {
-		Placeholder string
-	}{
-		"placeholder",
-	}
-
-	stepTrace.WriteString("Use OPA to evaluate whether Private Cluster is enabled on this cluster; ")
-
-	err = eval("private_cluster")
-	return
+func (scenario *scenarioState) theKubernetesWebUIIsDisabled() error {
+	return opaProbe("kube_dashboard", scenario)
 }
 
-func (scenario *scenarioState) networkOutboundType() (err error) {
-	var stepTrace strings.Builder
-
-	stepTrace, payload, err := utils.AuditPlaceholders()
-	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
-	}()
-
-	payload = struct {
-		Placeholder string
-	}{
-		"placeholder",
-	}
-
-	stepTrace.WriteString("Use OPA to evaluate whether Network Outbound type is set to user defined; ")
-
-	err = eval("network_outbound_type")
-	return
+func (scenario *scenarioState) privateClusterIsEnabled() error {
+	return opaProbe("private_cluster", scenario)
 }
 
-func (scenario *scenarioState) diskEncryption() (err error) {
-	var stepTrace strings.Builder
+func (scenario *scenarioState) networkOutboundType() error {
+	return opaProbe("network_outbound_type", scenario)
+}
 
-	stepTrace, payload, err := utils.AuditPlaceholders()
-	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
-	}()
-
-	payload = struct {
-		Placeholder string
-	}{
-		"placeholder",
-	}
-
-	stepTrace.WriteString("Use OPA to evaluate whether a disk encryption set is configured; ")
-
-	err = eval("disk_encryption")
-	return
+func (scenario *scenarioState) diskEncryption() error {
+	return opaProbe("disk_encryption", scenario)
 }
