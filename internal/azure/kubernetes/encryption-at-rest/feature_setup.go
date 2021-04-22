@@ -2,9 +2,9 @@ package aksencryptionatrest
 
 import (
 	"context"
-	"log"
-
+	"fmt"
 	"github.com/cucumber/godog"
+	"log"
 
 	"github.com/citihub/probr-sdk/audit"
 	"github.com/citihub/probr-sdk/config"
@@ -114,6 +114,21 @@ func teardown() {
 	log.Printf("[DEBUG] Teardown - removing resources used during tests")
 
 	//delete any resources you created here
+	//if config.Vars.ServicePacks.Kubernetes.KeepPods == "false" {
+	for _, podName := range scenario.pods {
+		err := kConnection.DeletePodIfExists(podName, scenario.namespace, Probe.Name())
+		if err != nil {
+			log.Printf(fmt.Sprintf("[ERROR] Could not retrieve pod from namespace '%s' for deletion: %s", scenario.namespace, err))
+		}
+	}
+	//}
+
+	for _, pvcName := range scenario.pvcs {
+		err := kConnection.DeletePVCIfExists(pvcName, scenario.namespace, Probe.Name())
+		if err != nil {
+			log.Printf(fmt.Sprintf("[ERROR] Could not retrieve PVC from namespace '%s' for deletion: %s", scenario.namespace, err))
+		}
+	}
 
 	log.Println("[DEBUG] Teardown completed")
 }
