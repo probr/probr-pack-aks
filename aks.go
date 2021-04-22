@@ -1,9 +1,10 @@
 package pack
 
 import (
-	azureaks "github.com/citihub/probr-pack-aks/internal/azure/aks"
-	kubeaks "github.com/citihub/probr-pack-aks/internal/azure/kubernetes/iam"
-	//"github.com/citihub/probr-sdk/config"
+	// azureaks "github.com/citihub/probr-pack-aks/internal/azure/aks"
+	kubeear "github.com/citihub/probr-pack-aks/internal/azure/kubernetes/encryption-at-rest"
+	// kubeaks "github.com/citihub/probr-pack-aks/internal/azure/kubernetes/iam"
+	// "github.com/citihub/probr-sdk/config"
 	"github.com/citihub/probr-sdk/probeengine"
 	"github.com/markbates/pkger"
 )
@@ -16,8 +17,9 @@ func GetProbes() []probeengine.Probe {
 		return nil
 	}*/
 	return []probeengine.Probe{
-		azureaks.Probe,
-		kubeaks.Probe,
+		//azureaks.Probe,
+		//kubeaks.Probe,
+		kubeear.Probe,
 	}
 }
 
@@ -27,4 +29,5 @@ func init() {
 	pkger.Include("/internal/azure/aks/aks.feature")
 	pkger.Include("/internal/azure/aks/aks.rego")
 	pkger.Include("/internal/azure/kubernetes/iam/iam.feature")
+	pkger.Include("/internal/azure/kubernetes/encryption-at-rest/encryption-at-rest.feature")
 }
