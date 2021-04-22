@@ -1,4 +1,4 @@
-@k-iam
+@aks-iam
 @probes/aks/iam
 Feature: Ensure stringent authentication and authorisation
     As a Security Auditor
@@ -8,7 +8,7 @@ Feature: Ensure stringent authentication and authorisation
     Background:
         Given a Kubernetes cluster exists which we can deploy into
 
-    @k-iam-001
+    @aks-iam-001
     Scenario Outline: Prevent cross namespace Azure Identities
 
         Security Standard References:
@@ -18,7 +18,7 @@ Feature: Ensure stringent authentication and authorisation
         Then I succeed to create a simple pod in "the probr" namespace assigned with the "probr-aib" AzureIdentityBinding
         But an attempt to obtain an access token from that pod should "Fail"
 
-    @k-iam-002
+    @aks-iam-002
     Scenario: Prevent cross namespace Azure Identity Bindings
 
         Security Standard References:
@@ -29,7 +29,7 @@ Feature: Ensure stringent authentication and authorisation
         Then I succeed to create a simple pod in "the probr" namespace assigned with the "probr-aib" AzureIdentityBinding
         But an attempt to obtain an access token from that pod should "Fail"
 
-    @k-iam-003
+    @aks-iam-003
     Scenario: Prevent access to AKS credentials via Azure Identity Components
 
         Security Standard References:
