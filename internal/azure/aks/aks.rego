@@ -18,6 +18,16 @@ azure_policy {
    m == true
 }
 
+default network_policy = false
+network_policy {
+  m := input.properties.networkProfile.networkPolicy
+  m == "azure"
+}
+network_policy {
+  m := input.properties.networkProfile.networkPolicy
+  m == "calico"
+}
+
 default private_cluster = false
 private_cluster {
   m := input.properties.apiServerAccessProfile.enablePrivateCluster

@@ -20,3 +20,6 @@ Feature: General cluster Security best practices
 
     Scenario:
       Then outbound network routing is user controlled
+
+    Scenario:
+      Then CNI network policy is enabled
