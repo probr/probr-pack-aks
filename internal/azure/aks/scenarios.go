@@ -35,7 +35,7 @@ func eval(functionName string) (err error) {
 }
 
 func loadJSON() (err error) {
-	// TODO: make this configurable
+	// TODO: Config make this configurable
 	aksJson, err = azConnection.GetManagedClusterJSON("probr-demo-rg", "probr-demo-cluster")
 	s := string(aksJson)
 	log.Printf("[DEBUG] AKS JSON: %v", s)

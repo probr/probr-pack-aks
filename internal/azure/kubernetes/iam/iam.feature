@@ -37,3 +37,13 @@ Feature: Ensure stringent authentication and authorisation
 
         And the cluster has managed identity components deployed
         Then the execution of a "get-azure-credentials" command inside the MIC pod is "not allowed"
+
+    @aks-iam-004
+    Scenario: Restrict access to cluster admin credentials
+
+        If a user has "Kubernetes Cluster Admin" RBAC role in Azure then they can get the cluster admin
+        credentials using 'az aks get-credentials --admin'. This results in a kubeconfig that is not
+        scoped to a user with full cluster privileged, so access to --admin should be restricted.
+
+        Then no AAD user should have the Azure Kubernetes Service Cluster Admin Role role assigned to them for this cluster
+        And I should not be able to obtain the cluster admin kubeconfig
