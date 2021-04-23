@@ -4,14 +4,13 @@ import (
 	azureaks "github.com/citihub/probr-pack-aks/internal/azure/aks"
 	kubeear "github.com/citihub/probr-pack-aks/internal/azure/kubernetes/encryption-at-rest"
 	kubeaks "github.com/citihub/probr-pack-aks/internal/azure/kubernetes/iam"
-	//"github.com/citihub/probr-sdk/config"
 	"github.com/citihub/probr-sdk/probeengine"
 	"github.com/markbates/pkger"
 )
 
 // GetProbes returns a list of probe objects
 func GetProbes() []probeengine.Probe {
-	// TODO: make this configurable
+	// TODO: Config make this configurable once the config handler has been refactored
 
 	/*if config.Vars.ServicePacks.AKS.IsExcluded() {
 		return nil

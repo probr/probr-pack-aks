@@ -2,6 +2,7 @@
 package iam
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,7 +13,10 @@ import (
 	"github.com/citihub/probr-sdk/audit"
 	"github.com/citihub/probr-sdk/config"
 	"github.com/citihub/probr-sdk/probeengine"
+	azureutil "github.com/citihub/probr-sdk/providers/azure"
 	"github.com/citihub/probr-sdk/providers/azure/aks"
+
+	azureconnection "github.com/citihub/probr-sdk/providers/azure/connection"
 	"github.com/citihub/probr-sdk/providers/kubernetes/connection"
 	"github.com/citihub/probr-sdk/providers/kubernetes/constructors"
 	"github.com/citihub/probr-sdk/providers/kubernetes/errors"
@@ -38,6 +42,7 @@ var Probe probeStruct
 var scenario scenarioState
 var conn connection.Connection
 var azureK8S *aks.AKS
+var azConnection azureconnection.Azure // Provides functionality to interact with Azure
 
 func (scenario *scenarioState) aKubernetesClusterIsDeployed() error {
 	// Standard auditing logic to ensures panics are also audited
@@ -442,6 +447,62 @@ func (scenario *scenarioState) theExecutionOfAXCommandInsideTheMICPodIsY(command
 	return err
 }
 
+func (scenario *scenarioState) checkClusterRBACForAdminRole() error {
+	stepTrace, payload, err := utils.AuditPlaceholders()
+	defer func() {
+		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+	}()
+
+	//this is the role definition name for rolename "Azure Kubernetes Service Cluster Admin Role"
+	roleDefName := "0ab0b1a8-8aac-4efd-b8c2-3ee1fb270be8"
+
+	// TODO: Config make this configurable once config has been refactored
+	caRoleAssigned, err := azConnection.ClusterHasRoleAssignment("probr-demo-rg", "probr-demo-cluster", roleDefName)
+
+	if err != nil {
+		return err
+	}
+
+	if caRoleAssigned == true {
+		return utils.ReformatError("Azure Kubernetes Service Cluster Admin Role is assigned to cluster")
+	}
+
+	payload = struct {
+		Placeholder string
+	}{
+		Placeholder: "placeholder",
+	}
+
+	return nil
+}
+
+func (scenario *scenarioState) checkCannotObtainClusterAdminCredentials() error {
+	stepTrace, payload, err := utils.AuditPlaceholders()
+	defer func() {
+		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+	}()
+
+	// TODO: Config
+	_, credsErr := azConnection.GetManagedClusterAdminCredentials("probr-demo-rg", "probr-demo-cluster")
+
+	if credsErr != nil {
+		log.Printf("[DEBUG] Error trying to get cluster admin credentials: %v", err)
+		//pass test if I got an error trying to obtain cluster admin credentials.
+		// TODO: check the actual error message - risk of false positives if error was for another reason.
+		err = nil
+	}
+	err = utils.ReformatError("I was able to get cluster admin credentials")
+
+	payload = struct {
+		Placeholder string
+	}{
+		Placeholder: "placeholder",
+	}
+
+	return err
+
+}
+
 // Name presents the name of this probe for external reference
 func (probe probeStruct) Name() string {
 	return "iam"
@@ -458,6 +519,14 @@ func (probe probeStruct) ProbeInitialize(ctx *godog.TestSuiteContext) {
 	ctx.BeforeSuite(func() {
 		conn = connection.Get()
 		azureK8S = aks.NewAKS(conn)
+
+		azConnection = azureconnection.NewAzureConnection(
+			context.Background(),
+			azureutil.SubscriptionID(),
+			azureutil.TenantID(),
+			azureutil.ClientID(),
+			azureutil.ClientSecret(),
+		)
 
 		//setup AzureIdentity stuff ..??  Or should this be a pre-test setup
 	})
@@ -478,12 +547,15 @@ func (probe probeStruct) ScenarioInitialize(ctx *godog.ScenarioContext) {
 	ctx.Step(`^a Kubernetes cluster exists which we can deploy into$`, scenario.aKubernetesClusterIsDeployed)
 
 	// Steps
-	ctx.Step(`^an "([^"]*)" called "([^"]*)" exists in the namespace called "([^"]*)"$`, scenario.aResourceTypeXCalledYExistsInNamespaceCalledZ)
-	ctx.Step(`^I succeed to create a simple pod in "([^"]*)" namespace assigned with the "([^"]*)" AzureIdentityBinding$`, scenario.iSucceedToCreateASimplePodInNamespaceAssignedWithThatAzureIdentityBinding)
-	ctx.Step(`^an attempt to obtain an access token from that pod should "([^"]*)"$`, scenario.anAttemptToObtainAnAccessTokenFromThatPodShouldX)
-	ctx.Step(`^I create an AzureIdentityBinding called "([^"]*)" in the Probr namespace bound to the "([^"]*)" AzureIdentity$`, scenario.iCreateAnAzureIdentityBindingCalledInANondefaultNamespace)
-	ctx.Step(`^the cluster has managed identity components deployed$`, scenario.theClusterHasManagedIdentityComponentsDeployed)
-	ctx.Step(`^the execution of a "([^"]*)" command inside the MIC pod is "([^"]*)"$`, scenario.theExecutionOfAXCommandInsideTheMICPodIsY)
+	//	ctx.Step(`^an "([^"]*)" called "([^"]*)" exists in the namespace called "([^"]*)"$`, scenario.aResourceTypeXCalledYExistsInNamespaceCalledZ)
+	//	ctx.Step(`^I succeed to create a simple pod in "([^"]*)" namespace assigned with the "([^"]*)" AzureIdentityBinding$`, scenario.iSucceedToCreateASimplePodInNamespaceAssignedWithThatAzureIdentityBinding)
+	//	ctx.Step(`^an attempt to obtain an access token from that pod should "([^"]*)"$`, scenario.anAttemptToObtainAnAccessTokenFromThatPodShouldX)
+	//	ctx.Step(`^I create an AzureIdentityBinding called "([^"]*)" in the Probr namespace bound to the "([^"]*)" AzureIdentity$`, scenario.iCreateAnAzureIdentityBindingCalledInANondefaultNamespace)
+	//	ctx.Step(`^the cluster has managed identity components deployed$`, scenario.theClusterHasManagedIdentityComponentsDeployed)
+	//	ctx.Step(`^the execution of a "([^"]*)" command inside the MIC pod is "([^"]*)"$`, scenario.theExecutionOfAXCommandInsideTheMICPodIsY)
+
+	ctx.Step(`^no AAD user should have the Azure Kubernetes Service Cluster Admin Role role assigned to them for this cluster$`, scenario.checkClusterRBACForAdminRole)
+	ctx.Step(`^I should not be able to obtain the cluster admin kubeconfig$`, scenario.checkCannotObtainClusterAdminCredentials)
 
 	ctx.AfterScenario(func(s *godog.Scenario, err error) {
 		afterScenario(scenario, probe, s, err)
