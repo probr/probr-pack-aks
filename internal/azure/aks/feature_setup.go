@@ -86,6 +86,8 @@ func (probe probeStruct) ScenarioInitialize(ctx *godog.ScenarioContext) {
 	ctx.Step(`^Private Cluster is enabled$`, scenario.privateClusterIsEnabled)
 	ctx.Step(`^Disk Encryption is enabled$`, scenario.diskEncryption)
 	ctx.Step(`^outbound network routing is user controlled$`, scenario.networkOutboundType)
+	ctx.Step(`^CNI network policy is enabled$`, scenario.cniNetworkingIsEnabled)
+	ctx.Step(`^Kubernetes node hosts do not have public IPs$`, scenario.nodesDontHavePublicIps)
 
 	ctx.AfterScenario(func(s *godog.Scenario, err error) {
 		afterScenario(scenario, probe, s, err)

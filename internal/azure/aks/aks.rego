@@ -18,6 +18,16 @@ azure_policy {
    m == true
 }
 
+default network_policy = false
+network_policy {
+  m := input.properties.networkProfile.networkPolicy
+  m == "azure"
+}
+network_policy {
+  m := input.properties.networkProfile.networkPolicy
+  m == "calico"
+}
+
 default private_cluster = false
 private_cluster {
   m := input.properties.apiServerAccessProfile.enablePrivateCluster
@@ -34,4 +44,10 @@ default disk_encryption = false
 disk_encryption {
   m := input.properties.diskEncryptionSetId
   startswith(m, "/subscriptions")
+}
+
+default node_public_ip = false
+node_public_ip {
+  node_public_ips := {agentPool | agentPool := input.properties.agentPoolProfiles[_]; agentPool.enableNodePublicIp == true}
+  count(node_public_ips) == 0
 }

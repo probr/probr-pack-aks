@@ -113,3 +113,11 @@ func (scenario *scenarioState) networkOutboundType() error {
 func (scenario *scenarioState) diskEncryption() error {
 	return opaProbe("disk_encryption", scenario)
 }
+
+func (scenario *scenarioState) cniNetworkingIsEnabled() error {
+	return opaProbe("network_policy", scenario)
+}
+
+func (scenario *scenarioState) nodesDontHavePublicIps() error {
+	return opaProbe("node_public_ip", scenario)
+}
