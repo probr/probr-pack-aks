@@ -3,26 +3,11 @@ Feature: General cluster Security best practices
   Background:
     Given an Azure Kubernetes cluster we can read the configuration of
 
-    Scenario:
+    Scenario: Kubernetes Web UI is disabled
        Then the Kubernetes Web UI is disabled
 
-    Scenario:
+    Scenario: Azure Policy is enabled
        Then Azure Policy is enabled
 
-    Scenario:
+    Scenario: Azure AD integration is enabled
        Then Azure AD integration is enabled
-
-    Scenario:
-      Then Private Cluster is enabled
-
-    Scenario:
-      Then Disk Encryption is enabled
-
-    Scenario:
-      Then outbound network routing is user controlled
-
-    Scenario:
-      Then CNI network policy is enabled
-
-    Scenario:
-      Then Kubernetes node hosts do not have public IPs

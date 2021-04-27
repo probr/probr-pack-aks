@@ -6,6 +6,7 @@ import (
 
 	"github.com/cucumber/godog"
 
+	"github.com/citihub/probr-pack-aks/internal/common"
 	"github.com/citihub/probr-sdk/audit"
 	"github.com/citihub/probr-sdk/probeengine"
 	azureutil "github.com/citihub/probr-sdk/providers/azure"
@@ -13,13 +14,7 @@ import (
 )
 
 type scenarioState struct {
-	name        string
-	currentStep string
-	audit       *audit.ScenarioAudit
-	probe       *audit.Probe
-	ctx         context.Context
-	tags        map[string]*string
-	//additional variables to hold state goes here
+	common.ScenarioState
 }
 
 // ProbeStruct allows this probe to be added to the ProbeStore
@@ -29,13 +24,12 @@ type probeStruct struct {
 var Probe probeStruct
 var scenario scenarioState // Local container of scenario state
 var aksJson []byte
-var azConnection connection.Azure // Provides functionality to interact with Azure
 
 func beforeScenario(s *scenarioState, probeName string, gs *godog.Scenario) {
-	s.name = gs.Name
-	s.probe = audit.State.GetProbeLog(probeName)
-	s.audit = audit.State.GetProbeLog(probeName).InitializeAuditor(gs.Name, gs.Tags)
-	s.ctx = context.Background()
+	s.Name = gs.Name
+	s.Probe = audit.State.GetProbeLog(probeName)
+	s.Audit = audit.State.GetProbeLog(probeName).InitializeAuditor(gs.Name, gs.Tags)
+	s.Ctx = context.Background()
 	probeengine.LogScenarioStart(gs)
 }
 
@@ -55,7 +49,7 @@ func (probe probeStruct) ProbeInitialize(ctx *godog.TestSuiteContext) {
 
 	ctx.BeforeSuite(func() {
 
-		azConnection = connection.NewAzureConnection(
+		scenario.AZConnection = connection.NewAzureConnection(
 			context.Background(),
 			azureutil.SubscriptionID(),
 			azureutil.TenantID(),
@@ -83,22 +77,17 @@ func (probe probeStruct) ScenarioInitialize(ctx *godog.ScenarioContext) {
 	ctx.Step(`^Azure AD integration is enabled$`, scenario.azureADIntegrationIsEnabled)
 	ctx.Step(`^Azure Policy is enabled$`, scenario.azurePolicyIsEnabled)
 	ctx.Step(`^the Kubernetes Web UI is disabled$`, scenario.theKubernetesWebUIIsDisabled)
-	ctx.Step(`^Private Cluster is enabled$`, scenario.privateClusterIsEnabled)
-	ctx.Step(`^Disk Encryption is enabled$`, scenario.diskEncryption)
-	ctx.Step(`^outbound network routing is user controlled$`, scenario.networkOutboundType)
-	ctx.Step(`^CNI network policy is enabled$`, scenario.cniNetworkingIsEnabled)
-	ctx.Step(`^Kubernetes node hosts do not have public IPs$`, scenario.nodesDontHavePublicIps)
 
 	ctx.AfterScenario(func(s *godog.Scenario, err error) {
 		afterScenario(scenario, probe, s, err)
 	})
 
 	ctx.BeforeStep(func(st *godog.Step) {
-		scenario.currentStep = st.Text
+		scenario.CurrentStep = st.Text
 	})
 
 	ctx.AfterStep(func(st *godog.Step, err error) {
-		scenario.currentStep = ""
+		scenario.CurrentStep = ""
 	})
 }
 

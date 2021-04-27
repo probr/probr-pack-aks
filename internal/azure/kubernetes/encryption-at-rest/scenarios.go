@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/citihub/probr-pack-aks/internal/common"
 	"github.com/citihub/probr-sdk/config"
 	"github.com/citihub/probr-sdk/providers/kubernetes/constructors"
 	"github.com/citihub/probr-sdk/utils"
@@ -14,7 +15,7 @@ func (scenario *scenarioState) aKubernetesClusterIsDeployed() error {
 	// Standard auditing logic to ensures panics are also audited
 	stepTrace, payload, err := utils.AuditPlaceholders()
 	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 	stepTrace.WriteString(fmt.Sprintf("Validate that a cluster can be reached using the specified kube config and context; "))
 
@@ -34,7 +35,7 @@ func (scenario *scenarioState) iCreateAPodWhichDynamicallyCreatesAnAzureDisk() e
 
 	stepTrace, payload, err := utils.AuditPlaceholders()
 	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
 	stepTrace.WriteString("Build a pod spec with default values; ")
@@ -90,10 +91,10 @@ func (scenario *scenarioState) theDiskIsEncryptedUsingCustomerManagedKeys() erro
 
 	log.Printf("[DEBUG] Disk URI is %s", pv.Spec.AzureDisk.DataDiskURI)
 
-	rgName, diskName := azConnection.ParseDiskDetails(pv.Spec.AzureDisk.DataDiskURI)
+	rgName, diskName := scenario.AZConnection.ParseDiskDetails(pv.Spec.AzureDisk.DataDiskURI)
 	log.Printf("[DEBUG] Disk details are rgName: %s. diskName: %s", rgName, diskName)
 
-	azureDisk, err := azConnection.GetDisk(rgName, diskName)
+	azureDisk, err := scenario.AZConnection.GetDisk(rgName, diskName)
 	if err != nil {
 		log.Printf("Error getting disk client")
 		return err
@@ -107,4 +108,17 @@ func (scenario *scenarioState) theDiskIsEncryptedUsingCustomerManagedKeys() erro
 
 	return fmt.Errorf("Disk %s in resource group %s not encrypted with customer key. Encryption type was %s", diskName, rgName, encryptionType)
 
+}
+
+func (scenario *scenarioState) anAzureKubernetesClusterWeCanReadTheConfigurationOf() (err error) {
+
+	baseScenario := scenario.GetScenarioState()
+	aksJson, err = common.AnAzureKubernetesClusterWeCanReadTheConfigurationOf(&baseScenario)
+
+	return
+}
+
+func (scenario *scenarioState) diskEncryption() error {
+	baseState := scenario.GetScenarioState()
+	return common.OPAProbe("disk_encryption", aksJson, &baseState)
 }
