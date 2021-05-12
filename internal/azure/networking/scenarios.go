@@ -5,29 +5,22 @@ import (
 )
 
 func (scenario *scenarioState) anAzureKubernetesClusterWeCanReadTheConfigurationOf() (err error) {
-
-	baseScenario := scenario.GetScenarioState()
-	aksJson, err = common.AnAzureKubernetesClusterWeCanReadTheConfigurationOf(&baseScenario)
-
+	aksJson, err = common.AnAzureKubernetesClusterWeCanReadTheConfigurationOf(scenario.GetScenarioState())
 	return
 }
 
 func (scenario *scenarioState) privateClusterIsEnabled() error {
-	baseState := scenario.GetScenarioState()
-	return common.OPAProbe("private_cluster", aksJson, &baseState)
+	return common.OPAProbe("private_cluster", aksJson, scenario.GetScenarioState())
 }
 
 func (scenario *scenarioState) networkOutboundType() error {
-	baseState := scenario.GetScenarioState()
-	return common.OPAProbe("network_outbound_type", aksJson, &baseState)
+	return common.OPAProbe("network_outbound_type", aksJson, scenario.GetScenarioState())
 }
 
 func (scenario *scenarioState) cniNetworkingIsEnabled() error {
-	baseState := scenario.GetScenarioState()
-	return common.OPAProbe("network_policy", aksJson, &baseState)
+	return common.OPAProbe("network_policy", aksJson, scenario.GetScenarioState())
 }
 
 func (scenario *scenarioState) nodesDontHavePublicIps() error {
-	baseState := scenario.GetScenarioState()
-	return common.OPAProbe("node_public_ip", aksJson, &baseState)
+	return common.OPAProbe("node_public_ip", aksJson, scenario.GetScenarioState())
 }

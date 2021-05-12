@@ -11,8 +11,10 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 
 	"github.com/citihub/probr-pack-aks/internal/common"
+	"github.com/citihub/probr-pack-aks/internal/config"
+	"github.com/citihub/probr-pack-aks/internal/summary"
+
 	"github.com/citihub/probr-sdk/audit"
-	"github.com/citihub/probr-sdk/config"
 	"github.com/citihub/probr-sdk/probeengine"
 	azureutil "github.com/citihub/probr-sdk/providers/azure"
 	"github.com/citihub/probr-sdk/providers/azure/aks"
@@ -29,11 +31,8 @@ type probeStruct struct{}
 // scenarioState holds the steps and state for any scenario in this probe
 type scenarioState struct {
 	common.ScenarioState
-	name                  string
-	currentStep           string
 	namespace             string
 	probeAudit            *audit.Probe
-	audit                 *audit.ScenarioAudit
 	pods                  []string //All pods created within the test. Should tear down at the end.
 	micPodName            string
 	azureIdentityBindings []string //Identity Bindings created within the test. Should tear down at the end.
@@ -42,7 +41,7 @@ type scenarioState struct {
 // Probe meets the service pack interface for adding the logic from this file
 var Probe probeStruct
 var scenario scenarioState
-var conn connection.Connection
+var conn *connection.Conn
 var azureK8S *aks.AKS
 
 //var azConnection azureconnection.Azure // Provides functionality to interact with Azure
@@ -51,7 +50,10 @@ func (scenario *scenarioState) aKubernetesClusterIsDeployed() error {
 	// Standard auditing logic to ensures panics are also audited
 	stepTrace, payload, err := utils.AuditPlaceholders()
 	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
+		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 	stepTrace.WriteString(fmt.Sprintf("Validate that a cluster can be reached using the specified kube config and context; "))
 
@@ -81,7 +83,10 @@ func (scenario *scenarioState) aResourceTypeXCalledYExistsInNamespaceCalledZ(res
 	// Standard auditing logic to ensures panics are also audited
 	stepTrace, payload, err := utils.AuditPlaceholders()
 	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
+		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
 	// TODO: This implementation is coupled to Azure. How should we deal with this when segregating service pack?
@@ -139,7 +144,10 @@ func (scenario *scenarioState) iSucceedToCreateASimplePodInNamespaceAssignedWith
 	// Standard auditing logic to ensures panics are also audited
 	stepTrace, payload, err := utils.AuditPlaceholders()
 	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
+		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
 	// Validate input
@@ -159,7 +167,7 @@ func (scenario *scenarioState) iSucceedToCreateASimplePodInNamespaceAssignedWith
 		aadPodIDBinding = aibName // TODO: This value is the same in both config and feature file
 	case "the default":
 		scenario.namespace = "default"
-		aadPodIDBinding = config.Vars.ServicePacks.Kubernetes.Azure.DefaultNamespaceAIB // TODO: This value is the same in both config and feature file
+		aadPodIDBinding = config.Vars.ServicePacks.AKS.ManagedID.DefaultNamespaceAIB // TODO: This value is the same in both config and feature file
 	default:
 		err = utils.ReformatError("Unexpected value provided for namespace: %s", namespace)
 		return err
@@ -170,7 +178,7 @@ func (scenario *scenarioState) iSucceedToCreateASimplePodInNamespaceAssignedWith
 	// Should revisit how to handle this.
 
 	stepTrace.WriteString(fmt.Sprintf("Build a pod spec with default values; "))
-	podObject := constructors.PodSpec(Probe.Name(), config.Vars.ServicePacks.Kubernetes.ProbeNamespace)
+	podObject := constructors.PodSpec(Probe.Name(), config.Vars.ServicePacks.Kubernetes.ProbeNamespace, config.Vars.ServicePacks.Kubernetes.AuthorisedContainerImage)
 	// TODO: Delete iam-azi-test-aib-curl.yaml file from 'assets' folder
 
 	stepTrace.WriteString(fmt.Sprintf("Add '%s' namespace to pod spec; ", scenario.namespace))
@@ -214,7 +222,10 @@ func (scenario *scenarioState) anAttemptToObtainAnAccessTokenFromThatPodShouldX(
 	// Standard auditing logic to ensures panics are also audited
 	stepTrace, payload, err := utils.AuditPlaceholders()
 	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
+		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
 	// Validate input
@@ -283,7 +294,10 @@ func (scenario *scenarioState) iCreateAnAzureIdentityBindingCalledInANondefaultN
 	// Standard auditing logic to ensures panics are also audited
 	stepTrace, payload, err := utils.AuditPlaceholders()
 	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
+		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
 	probrNameSpace := scenario.namespace
@@ -320,10 +334,13 @@ func (scenario *scenarioState) theClusterHasManagedIdentityComponentsDeployed() 
 	// Standard auditing logic to ensures panics are also audited
 	stepTrace, payload, err := utils.AuditPlaceholders()
 	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
+		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
-	identityPodsNamespace := config.Vars.ServicePacks.Kubernetes.Azure.IdentityNamespace
+	identityPodsNamespace := config.Vars.ServicePacks.AKS.ManagedID.IdentityNamespace
 	stepTrace.WriteString(fmt.Sprintf(
 		"Get pods from '%s' namespace; ", identityPodsNamespace))
 	// look for the mic pods
@@ -372,7 +389,10 @@ func (scenario *scenarioState) theExecutionOfAXCommandInsideTheMICPodIsY(command
 	// Standard auditing logic to ensures panics are also audited
 	stepTrace, payload, err := utils.AuditPlaceholders()
 	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
+		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
 	var cmd string
@@ -401,7 +421,7 @@ func (scenario *scenarioState) theExecutionOfAXCommandInsideTheMICPodIsY(command
 		return err
 	}
 
-	identityPodsNamespace := config.Vars.ServicePacks.Kubernetes.Azure.IdentityNamespace
+	identityPodsNamespace := config.Vars.ServicePacks.AKS.ManagedID.IdentityNamespace
 	stepTrace.WriteString(fmt.Sprintf(
 		"Attempt to execute command '%s' in MIC pod '%s'; ", cmd, scenario.micPodName))
 	exitCode, stdOut, _, cmdErr := conn.ExecCommand(cmd, identityPodsNamespace, scenario.micPodName)
@@ -453,14 +473,16 @@ func (scenario *scenarioState) theExecutionOfAXCommandInsideTheMICPodIsY(command
 func (scenario *scenarioState) checkClusterRBACForAdminRole() error {
 	stepTrace, payload, err := utils.AuditPlaceholders()
 	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
+		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
 	//this is the role definition name for rolename "Azure Kubernetes Service Cluster Admin Role"
 	roleDefName := "0ab0b1a8-8aac-4efd-b8c2-3ee1fb270be8"
 
-	// TODO: Config make this configurable once config has been refactored
-	caRoleAssigned, err := scenario.AZConnection.ClusterHasRoleAssignment("probr-demo-rg", "probr-demo-cluster", roleDefName)
+	caRoleAssigned, err := scenario.AZConnection.ClusterHasRoleAssignment(config.Vars.ServicePacks.AKS.ResourceGroupName, config.Vars.ServicePacks.AKS.ClusterName, roleDefName)
 
 	if err != nil {
 		return err
@@ -482,11 +504,13 @@ func (scenario *scenarioState) checkClusterRBACForAdminRole() error {
 func (scenario *scenarioState) checkCannotObtainClusterAdminCredentials() error {
 	stepTrace, payload, err := utils.AuditPlaceholders()
 	defer func() {
-		scenario.audit.AuditScenarioStep(scenario.currentStep, stepTrace.String(), payload, err)
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
+		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
-	// TODO: Config
-	_, credsErr := scenario.AZConnection.GetManagedClusterAdminCredentials("probr-demo-rg", "probr-demo-cluster")
+	_, credsErr := scenario.AZConnection.GetManagedClusterAdminCredentials(config.Vars.ServicePacks.AKS.ResourceGroupName, config.Vars.ServicePacks.AKS.ClusterName)
 
 	if credsErr != nil {
 		log.Printf("[DEBUG] Error trying to get cluster admin credentials: %v", err)
@@ -520,7 +544,8 @@ func (probe probeStruct) Path() string {
 // test handler as part of the init() function.
 func (probe probeStruct) ProbeInitialize(ctx *godog.TestSuiteContext) {
 	ctx.BeforeSuite(func() {
-		conn = connection.Get()
+		//conn = connection.Get()
+		conn = connection.NewConnection(config.Vars.ServicePacks.Kubernetes.KubeConfigPath, config.Vars.ServicePacks.Kubernetes.KubeContext, config.Vars.ServicePacks.Kubernetes.ProbeNamespace)
 		azureK8S = aks.NewAKS(conn)
 
 		scenario.AZConnection = azureconnection.NewAzureConnection(
@@ -565,18 +590,18 @@ func (probe probeStruct) ScenarioInitialize(ctx *godog.ScenarioContext) {
 	})
 
 	ctx.BeforeStep(func(st *godog.Step) {
-		scenario.currentStep = st.Text
+		scenario.CurrentStep = st.Text
 	})
 
 	ctx.AfterStep(func(st *godog.Step, err error) {
-		scenario.currentStep = ""
+		scenario.CurrentStep = ""
 	})
 }
 
 func beforeScenario(s *scenarioState, probeName string, gs *godog.Scenario) {
-	s.name = gs.Name
-	s.probeAudit = audit.State.GetProbeLog(probeName)
-	s.audit = audit.State.GetProbeLog(probeName).InitializeAuditor(gs.Name, gs.Tags)
+	s.Name = gs.Name
+	s.probeAudit = summary.State.GetProbeLog(probeName)
+	s.Audit = summary.State.GetProbeLog(probeName).InitializeAuditor(gs.Name, gs.Tags)
 	s.pods = make([]string, 0)
 	s.namespace = config.Vars.ServicePacks.Kubernetes.ProbeNamespace
 	s.azureIdentityBindings = make([]string, 0)

@@ -1,3 +1,5 @@
+release: go-tidy go-test go-package go-release pkgr-clean
+rc: go-tidy go-test go-package go-release-candidate pkgr-clean
 binary: go-tidy go-test go-package go-build pkgr-clean
 quick: go-package go-build pkgr-clean
 
@@ -7,7 +9,7 @@ go-package:
 
 go-build:
 	@echo "  >  Building binary..."
-	go build -o aks cmd/main.go
+	go build -o aks -ldflags="-X 'main.GitCommitHash=`git rev-parse --short HEAD`' -X 'main.BuiltAt=`date +%FT%T%z`'"
 
 pkgr-clean:
 	@echo "  >  Removing pkged.go to avoid accidental re-use of old files..."
@@ -23,11 +25,10 @@ go-tidy:
 	@echo "  >  Tidying go.mod ..."
 	go mod tidy
 
-.PHONY: help
-all: help
-help: Makefile
-	@echo
-	@echo " Choose a command run in "$(PROJECTNAME)":"
-	@echo
-	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
-	@echo
+go-release-candidate: binary
+	@echo "  >  Building release candidate ..."
+	go build -o aks -ldflags="-X 'main.GitCommitHash=`git rev-parse --short HEAD`' -X 'main.BuiltAt=`date +%FT%T%z`' -X 'main.Prerelease=rc'"
+
+go-release: binary
+	@echo "  >  Building release ..."
+	go build -o aks -ldflags="-X 'main.GitCommitHash=`git rev-parse --short HEAD`' -X 'main.BuiltAt=`date +%FT%T%z`' -X 'main.Prerelease='"

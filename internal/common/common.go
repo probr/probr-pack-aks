@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"fmt"
+	"github.com/citihub/probr-pack-aks/internal/config"
 	"github.com/citihub/probr-sdk/audit"
 	"github.com/citihub/probr-sdk/probeengine"
 	"github.com/citihub/probr-sdk/probeengine/opa"
@@ -16,7 +17,7 @@ import (
 type ScenarioState struct {
 	Name         string
 	CurrentStep  string
-	Audit        *audit.ScenarioAudit
+	Audit        *audit.Scenario
 	Probe        *audit.Probe
 	Ctx          context.Context
 	Tags         map[string]*string
@@ -27,8 +28,8 @@ type ScenarioState struct {
 const opaPackageName = "aks"
 
 // GetScenarioState returns the ScenarioState struct - useful if used as an embedded field (see comment on OPAProbe)
-func (s ScenarioState) GetScenarioState() ScenarioState {
-	return s
+func (s ScenarioState) GetScenarioState() *ScenarioState {
+	return &s
 }
 
 /*
@@ -58,6 +59,9 @@ func OPAProbe(opaFuncName string, aksJson []byte, scenario *ScenarioState) (err 
 	}
 
 	defer func() {
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
 		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
@@ -103,7 +107,11 @@ func AnAzureKubernetesClusterWeCanReadTheConfigurationOf(scenario *ScenarioState
 	var stepTrace strings.Builder
 
 	stepTrace, payload, err := utils.AuditPlaceholders()
+
 	defer func() {
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
 		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
@@ -129,7 +137,7 @@ func AnAzureKubernetesClusterWeCanReadTheConfigurationOf(scenario *ScenarioState
 }
 
 func getClusterConfigJSON(scenario *ScenarioState) (json []byte, err error) {
-	json, err = scenario.AZConnection.GetManagedClusterJSON("probr-demo-rg", "probr-demo-cluster")
+	json, err = scenario.AZConnection.GetManagedClusterJSON(config.Vars.ServicePacks.AKS.ResourceGroupName, config.Vars.ServicePacks.AKS.ClusterName)
 	if err != nil {
 		log.Printf("Error loading JSON: %v", err)
 		return

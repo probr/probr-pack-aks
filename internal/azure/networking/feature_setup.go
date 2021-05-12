@@ -7,7 +7,7 @@ import (
 	"github.com/cucumber/godog"
 
 	"github.com/citihub/probr-pack-aks/internal/common"
-	"github.com/citihub/probr-sdk/audit"
+	"github.com/citihub/probr-pack-aks/internal/summary"
 	"github.com/citihub/probr-sdk/probeengine"
 	azureutil "github.com/citihub/probr-sdk/providers/azure"
 	"github.com/citihub/probr-sdk/providers/azure/connection"
@@ -27,8 +27,8 @@ var aksJson []byte
 
 func beforeScenario(s *scenarioState, probeName string, gs *godog.Scenario) {
 	s.Name = gs.Name
-	s.Probe = audit.State.GetProbeLog(probeName)
-	s.Audit = audit.State.GetProbeLog(probeName).InitializeAuditor(gs.Name, gs.Tags)
+	s.Probe = summary.State.GetProbeLog(probeName)
+	s.Audit = summary.State.GetProbeLog(probeName).InitializeAuditor(gs.Name, gs.Tags)
 	s.Ctx = context.Background()
 	probeengine.LogScenarioStart(gs)
 }

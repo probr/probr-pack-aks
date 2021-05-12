@@ -6,23 +6,19 @@ import (
 
 func (scenario *scenarioState) anAzureKubernetesClusterWeCanReadTheConfigurationOf() (err error) {
 
-	baseScenario := scenario.GetScenarioState()
-	aksJson, err = common.AnAzureKubernetesClusterWeCanReadTheConfigurationOf(&baseScenario)
+	aksJson, err = common.AnAzureKubernetesClusterWeCanReadTheConfigurationOf(scenario.GetScenarioState())
 
 	return
 }
 
 func (scenario *scenarioState) azurePolicyIsEnabled() error {
-	baseState := scenario.GetScenarioState()
-	return common.OPAProbe("azure_policy", aksJson, &baseState)
+	return common.OPAProbe("azure_policy", aksJson, scenario.GetScenarioState())
 }
 
 func (scenario *scenarioState) azureADIntegrationIsEnabled() error {
-	baseState := scenario.GetScenarioState()
-	return common.OPAProbe("enable_rbac", aksJson, &baseState)
+	return common.OPAProbe("enable_rbac", aksJson, scenario.GetScenarioState())
 }
 
 func (scenario *scenarioState) theKubernetesWebUIIsDisabled() error {
-	baseState := scenario.GetScenarioState()
-	return common.OPAProbe("kube_dashboard", aksJson, &baseState)
+	return common.OPAProbe("kube_dashboard", aksJson, scenario.GetScenarioState())
 }

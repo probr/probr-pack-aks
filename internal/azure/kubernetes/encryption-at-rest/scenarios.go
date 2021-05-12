@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/citihub/probr-pack-aks/internal/common"
-	"github.com/citihub/probr-sdk/config"
+	"github.com/citihub/probr-pack-aks/internal/config"
 	"github.com/citihub/probr-sdk/providers/kubernetes/constructors"
 	"github.com/citihub/probr-sdk/utils"
 )
@@ -14,9 +14,14 @@ import (
 func (scenario *scenarioState) aKubernetesClusterIsDeployed() error {
 	// Standard auditing logic to ensures panics are also audited
 	stepTrace, payload, err := utils.AuditPlaceholders()
+
 	defer func() {
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
 		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
+
 	stepTrace.WriteString(fmt.Sprintf("Validate that a cluster can be reached using the specified kube config and context; "))
 
 	payload = struct {
@@ -34,12 +39,16 @@ func (scenario *scenarioState) aKubernetesClusterIsDeployed() error {
 func (scenario *scenarioState) iCreateAPodWhichDynamicallyCreatesAnAzureDisk() error {
 
 	stepTrace, payload, err := utils.AuditPlaceholders()
+
 	defer func() {
+		if panicErr := recover(); panicErr != nil {
+			err = utils.ReformatError("[ERROR] Unexpected behavior occured: %s", panicErr)
+		}
 		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
 	stepTrace.WriteString("Build a pod spec with default values; ")
-	podObject := constructors.PodSpec(Probe.Name(), scenario.namespace)
+	podObject := constructors.PodSpec(Probe.Name(), scenario.namespace, config.Vars.ServicePacks.Kubernetes.AuthorisedContainerImage)
 
 	//TODO: make storage class configurable. Hardcode to 'default' at the moment
 	pvcObject := constructors.DynamicPersistentVolumeClaim(Probe.Name(), scenario.namespace, "default")
@@ -112,13 +121,11 @@ func (scenario *scenarioState) theDiskIsEncryptedUsingCustomerManagedKeys() erro
 
 func (scenario *scenarioState) anAzureKubernetesClusterWeCanReadTheConfigurationOf() (err error) {
 
-	baseScenario := scenario.GetScenarioState()
-	aksJson, err = common.AnAzureKubernetesClusterWeCanReadTheConfigurationOf(&baseScenario)
+	aksJson, err = common.AnAzureKubernetesClusterWeCanReadTheConfigurationOf(scenario.GetScenarioState())
 
 	return
 }
 
 func (scenario *scenarioState) diskEncryption() error {
-	baseState := scenario.GetScenarioState()
-	return common.OPAProbe("disk_encryption", aksJson, &baseState)
+	return common.OPAProbe("disk_encryption", aksJson, scenario.GetScenarioState())
 }

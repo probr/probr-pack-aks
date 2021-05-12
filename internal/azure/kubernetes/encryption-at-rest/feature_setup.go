@@ -7,8 +7,9 @@ import (
 	"log"
 
 	"github.com/citihub/probr-pack-aks/internal/common"
-	"github.com/citihub/probr-sdk/audit"
-	"github.com/citihub/probr-sdk/config"
+	"github.com/citihub/probr-pack-aks/internal/config"
+	"github.com/citihub/probr-pack-aks/internal/summary"
+
 	"github.com/citihub/probr-sdk/probeengine"
 
 	azureutil "github.com/citihub/probr-sdk/providers/azure"
@@ -36,8 +37,8 @@ var aksJson []byte
 
 func beforeScenario(s *scenarioState, probeName string, gs *godog.Scenario) {
 	s.Name = gs.Name
-	s.Probe = audit.State.GetProbeLog(probeName)
-	s.Audit = audit.State.GetProbeLog(probeName).InitializeAuditor(gs.Name, gs.Tags)
+	s.Probe = summary.State.GetProbeLog(probeName)
+	s.Audit = summary.State.GetProbeLog(probeName).InitializeAuditor(gs.Name, gs.Tags)
 	s.Ctx = context.Background()
 	s.namespace = config.Vars.ServicePacks.Kubernetes.ProbeNamespace
 	probeengine.LogScenarioStart(gs)
@@ -68,7 +69,7 @@ func (probe probeStruct) ProbeInitialize(ctx *godog.TestSuiteContext) {
 		)
 
 		//TODO make this part of the scenario object
-		kConnection = k8sconnection.Get()
+		kConnection = k8sconnection.NewConnection(config.Vars.ServicePacks.Kubernetes.KubeConfigPath, config.Vars.ServicePacks.Kubernetes.KubeContext, config.Vars.ServicePacks.Kubernetes.ProbeNamespace)
 
 	})
 

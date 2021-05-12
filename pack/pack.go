@@ -11,11 +11,6 @@ import (
 
 // GetProbes returns a list of probe objects
 func GetProbes() []probeengine.Probe {
-	// TODO: Config make this configurable once the config handler has been refactored
-
-	/*if config.Vars.ServicePacks.AKS.IsExcluded() {
-		return nil
-	}*/
 	return []probeengine.Probe{
 		azureaks.Probe,
 		kubeiam.Probe,
