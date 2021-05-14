@@ -29,11 +29,11 @@ var (
 	// Version is the main version number that is being run at the moment
 	Version = "0.1.0"
 
-	// Prerelease is a marker for the version. If this is "" (empty string)
+	// VersionPostfix is a marker for the version. If this is "" (empty string)
 	// then it means that it is a final release. Otherwise, this is a pre-release
 	// such as "dev" (in development), "beta", "rc", etc.
 	// This should only be modified thru ldflags in make file. See 'make release'
-	Prerelease = "dev"
+	VersionPostfix = "dev"
 
 	// GitCommitHash references the commit id at build time
 	// This should only be modified thru ldflags in make file. See 'make release'
@@ -159,8 +159,8 @@ func printVersion(w io.Writer) {
 }
 
 func getVersion() string {
-	if Prerelease != "" {
-		return fmt.Sprintf("%s-%s", Version, Prerelease)
+	if VersionPostfix != "" {
+		return fmt.Sprintf("%s-%s", Version, VersionPostfix)
 	}
 	return Version
 }
