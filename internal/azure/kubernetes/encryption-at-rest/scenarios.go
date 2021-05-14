@@ -5,10 +5,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/citihub/probr-pack-aks/internal/common"
-	"github.com/citihub/probr-pack-aks/internal/config"
-	"github.com/citihub/probr-sdk/providers/kubernetes/constructors"
-	"github.com/citihub/probr-sdk/utils"
+	"github.com/probr/probr-pack-aks/internal/common"
+	"github.com/probr/probr-pack-aks/internal/config"
+	"github.com/probr/probr-sdk/providers/kubernetes/constructors"
+	"github.com/probr/probr-sdk/utils"
 )
 
 func (scenario *scenarioState) aKubernetesClusterIsDeployed() error {
@@ -121,11 +121,11 @@ func (scenario *scenarioState) theDiskIsEncryptedUsingCustomerManagedKeys() erro
 
 func (scenario *scenarioState) anAzureKubernetesClusterWeCanReadTheConfigurationOf() (err error) {
 
-	aksJson, err = common.AnAzureKubernetesClusterWeCanReadTheConfigurationOf(scenario.GetScenarioState())
+	aksJSON, err = common.AnAzureKubernetesClusterWeCanReadTheConfigurationOf(scenario.GetScenarioState())
 
 	return
 }
 
 func (scenario *scenarioState) diskEncryption() error {
-	return common.OPAProbe("disk_encryption", aksJson, scenario.GetScenarioState())
+	return common.OPAProbe("disk_encryption", aksJSON, scenario.GetScenarioState())
 }

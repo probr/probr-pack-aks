@@ -3,18 +3,19 @@ package aksencryptionatrest
 import (
 	"context"
 	"fmt"
-	"github.com/cucumber/godog"
 	"log"
 
-	"github.com/citihub/probr-pack-aks/internal/common"
-	"github.com/citihub/probr-pack-aks/internal/config"
-	"github.com/citihub/probr-pack-aks/internal/summary"
+	"github.com/cucumber/godog"
 
-	"github.com/citihub/probr-sdk/probeengine"
+	"github.com/probr/probr-pack-aks/internal/common"
+	"github.com/probr/probr-pack-aks/internal/config"
+	"github.com/probr/probr-pack-aks/internal/summary"
 
-	azureutil "github.com/citihub/probr-sdk/providers/azure"
-	azureconnection "github.com/citihub/probr-sdk/providers/azure/connection"
-	k8sconnection "github.com/citihub/probr-sdk/providers/kubernetes/connection"
+	"github.com/probr/probr-sdk/probeengine"
+
+	azureutil "github.com/probr/probr-sdk/providers/azure"
+	azureconnection "github.com/probr/probr-sdk/providers/azure/connection"
+	k8sconnection "github.com/probr/probr-sdk/providers/kubernetes/connection"
 )
 
 type scenarioState struct {
@@ -30,10 +31,11 @@ type scenarioState struct {
 type probeStruct struct {
 }
 
+// Probe ...
 var Probe probeStruct
 var scenario scenarioState               // Local container of scenario state
 var kConnection k8sconnection.Connection // Provides functionality to interact with Kubernetes
-var aksJson []byte
+var aksJSON []byte
 
 func beforeScenario(s *scenarioState, probeName string, gs *godog.Scenario) {
 	s.Name = gs.Name

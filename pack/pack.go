@@ -1,12 +1,12 @@
 package pack
 
 import (
-	azureaks "github.com/citihub/probr-pack-aks/internal/azure/aks"
-	kubeear "github.com/citihub/probr-pack-aks/internal/azure/kubernetes/encryption-at-rest"
-	kubeiam "github.com/citihub/probr-pack-aks/internal/azure/kubernetes/iam"
-	azurenw "github.com/citihub/probr-pack-aks/internal/azure/networking"
-	"github.com/citihub/probr-sdk/probeengine"
 	"github.com/markbates/pkger"
+	azureaks "github.com/probr/probr-pack-aks/internal/azure/aks"
+	kubeear "github.com/probr/probr-pack-aks/internal/azure/kubernetes/encryption-at-rest"
+	kubeiam "github.com/probr/probr-pack-aks/internal/azure/kubernetes/iam"
+	azurenw "github.com/probr/probr-pack-aks/internal/azure/networking"
+	"github.com/probr/probr-sdk/probeengine"
 )
 
 // GetProbes returns a list of probe objects

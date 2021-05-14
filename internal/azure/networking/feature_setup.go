@@ -6,11 +6,11 @@ import (
 
 	"github.com/cucumber/godog"
 
-	"github.com/citihub/probr-pack-aks/internal/common"
-	"github.com/citihub/probr-pack-aks/internal/summary"
-	"github.com/citihub/probr-sdk/probeengine"
-	azureutil "github.com/citihub/probr-sdk/providers/azure"
-	"github.com/citihub/probr-sdk/providers/azure/connection"
+	"github.com/probr/probr-pack-aks/internal/common"
+	"github.com/probr/probr-pack-aks/internal/summary"
+	"github.com/probr/probr-sdk/probeengine"
+	azureutil "github.com/probr/probr-sdk/providers/azure"
+	"github.com/probr/probr-sdk/providers/azure/connection"
 )
 
 type scenarioState struct {
@@ -21,9 +21,10 @@ type scenarioState struct {
 type probeStruct struct {
 }
 
+// Probe ...
 var Probe probeStruct
 var scenario scenarioState // Local container of scenario state
-var aksJson []byte
+var aksJSON []byte
 
 func beforeScenario(s *scenarioState, probeName string, gs *godog.Scenario) {
 	s.Name = gs.Name

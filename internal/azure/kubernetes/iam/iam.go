@@ -10,20 +10,20 @@ import (
 	"github.com/cucumber/godog"
 	apiv1 "k8s.io/api/core/v1"
 
-	"github.com/citihub/probr-pack-aks/internal/common"
-	"github.com/citihub/probr-pack-aks/internal/config"
-	"github.com/citihub/probr-pack-aks/internal/summary"
+	"github.com/probr/probr-pack-aks/internal/common"
+	"github.com/probr/probr-pack-aks/internal/config"
+	"github.com/probr/probr-pack-aks/internal/summary"
 
-	"github.com/citihub/probr-sdk/audit"
-	"github.com/citihub/probr-sdk/probeengine"
-	azureutil "github.com/citihub/probr-sdk/providers/azure"
-	"github.com/citihub/probr-sdk/providers/azure/aks"
+	"github.com/probr/probr-sdk/audit"
+	"github.com/probr/probr-sdk/probeengine"
+	azureutil "github.com/probr/probr-sdk/providers/azure"
+	"github.com/probr/probr-sdk/providers/azure/aks"
 
-	azureconnection "github.com/citihub/probr-sdk/providers/azure/connection"
-	"github.com/citihub/probr-sdk/providers/kubernetes/connection"
-	"github.com/citihub/probr-sdk/providers/kubernetes/constructors"
-	"github.com/citihub/probr-sdk/providers/kubernetes/errors"
-	"github.com/citihub/probr-sdk/utils"
+	azureconnection "github.com/probr/probr-sdk/providers/azure/connection"
+	"github.com/probr/probr-sdk/providers/kubernetes/connection"
+	"github.com/probr/probr-sdk/providers/kubernetes/constructors"
+	"github.com/probr/probr-sdk/providers/kubernetes/errors"
+	"github.com/probr/probr-sdk/utils"
 )
 
 type probeStruct struct{}

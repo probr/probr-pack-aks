@@ -3,14 +3,15 @@ package common
 import (
 	"context"
 	"fmt"
-	"github.com/citihub/probr-pack-aks/internal/config"
-	"github.com/citihub/probr-sdk/audit"
-	"github.com/citihub/probr-sdk/probeengine"
-	"github.com/citihub/probr-sdk/probeengine/opa"
-	"github.com/citihub/probr-sdk/providers/azure/connection"
-	"github.com/citihub/probr-sdk/utils"
 	"log"
 	"strings"
+
+	"github.com/probr/probr-pack-aks/internal/config"
+	"github.com/probr/probr-sdk/audit"
+	"github.com/probr/probr-sdk/probeengine"
+	"github.com/probr/probr-sdk/probeengine/opa"
+	"github.com/probr/probr-sdk/providers/azure/connection"
+	"github.com/probr/probr-sdk/utils"
 )
 
 // ScenarioState is the base struct for handling state across steps in a scenario
@@ -49,7 +50,8 @@ func (s ScenarioState) GetScenarioState() *ScenarioState {
    common.OPAProbe("opa_function", json, &baseState)
 */
 
-func OPAProbe(opaFuncName string, aksJson []byte, scenario *ScenarioState) (err error) {
+// OPAProbe ...
+func OPAProbe(opaFuncName string, aksJSON []byte, scenario *ScenarioState) (err error) {
 
 	var stepTrace strings.Builder
 
@@ -73,11 +75,11 @@ func OPAProbe(opaFuncName string, aksJson []byte, scenario *ScenarioState) (err 
 
 	stepTrace.WriteString(fmt.Sprintf("Use OPA function %s to evaluate this cluster; ", opaFuncName))
 
-	err = eval(opaFuncName, aksJson)
+	err = eval(opaFuncName, aksJSON)
 	return
 }
 
-func eval(functionName string, aksJson []byte) (err error) {
+func eval(functionName string, aksJSON []byte) (err error) {
 	// true = return nil
 	// false = return new err
 	// err = return err
@@ -86,7 +88,7 @@ func eval(functionName string, aksJson []byte) (err error) {
 	log.Printf("[DEBUG] common.go: eval(): regoFilePath = %s", regoFilePath)
 	var r bool
 
-	r, err = opa.Eval(regoFilePath, opaPackageName, functionName, &aksJson)
+	r, err = opa.Eval(regoFilePath, opaPackageName, functionName, &aksJSON)
 
 	if err != nil {
 		log.Printf("[DEBUG] opa.Eval returned an error")
@@ -103,6 +105,7 @@ func eval(functionName string, aksJson []byte) (err error) {
 	return
 }
 
+// AnAzureKubernetesClusterWeCanReadTheConfigurationOf ...
 func AnAzureKubernetesClusterWeCanReadTheConfigurationOf(scenario *ScenarioState) (json []byte, err error) {
 	var stepTrace strings.Builder
 
@@ -131,7 +134,7 @@ func AnAzureKubernetesClusterWeCanReadTheConfigurationOf(scenario *ScenarioState
 	}
 
 	if len(json) == 0 {
-		err = fmt.Errorf("aksJson empty")
+		err = fmt.Errorf("aksJSON empty")
 	}
 	return
 }
@@ -144,7 +147,7 @@ func getClusterConfigJSON(scenario *ScenarioState) (json []byte, err error) {
 	}
 
 	if len(json) == 0 {
-		err = fmt.Errorf("aksJson empty")
+		err = fmt.Errorf("aksJSON empty")
 	}
 	return
 }
