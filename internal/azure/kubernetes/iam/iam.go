@@ -2,7 +2,6 @@
 package iam
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,15 +11,13 @@ import (
 
 	"github.com/probr/probr-pack-aks/internal/common"
 	"github.com/probr/probr-pack-aks/internal/config"
+	"github.com/probr/probr-pack-aks/internal/connection"
 	"github.com/probr/probr-pack-aks/internal/summary"
 
 	"github.com/probr/probr-sdk/audit"
 	"github.com/probr/probr-sdk/probeengine"
-	azureutil "github.com/probr/probr-sdk/providers/azure"
-	"github.com/probr/probr-sdk/providers/azure/aks"
 
-	azureconnection "github.com/probr/probr-sdk/providers/azure/connection"
-	"github.com/probr/probr-sdk/providers/kubernetes/connection"
+	k8sConnection "github.com/probr/probr-sdk/providers/kubernetes/connection"
 	"github.com/probr/probr-sdk/providers/kubernetes/constructors"
 	"github.com/probr/probr-sdk/providers/kubernetes/errors"
 	"github.com/probr/probr-sdk/utils"
@@ -41,10 +38,6 @@ type scenarioState struct {
 // Probe meets the service pack interface for adding the logic from this file
 var Probe probeStruct
 var scenario scenarioState
-var conn *connection.Conn
-var azureK8S *aks.AKS
-
-//var azConnection azureconnection.Azure // Provides functionality to interact with Azure
 
 func (scenario *scenarioState) aKubernetesClusterIsDeployed() error {
 	// Standard auditing logic to ensures panics are also audited
@@ -65,7 +58,7 @@ func (scenario *scenarioState) aKubernetesClusterIsDeployed() error {
 		config.Vars.ServicePacks.Kubernetes.KubeContext,
 	}
 
-	err = conn.ClusterIsDeployed() // Must be assigned to 'err' be audited
+	err = connection.Kubernetes.ClusterIsDeployed() // Must be assigned to 'err' be audited
 	return err
 }
 
@@ -92,7 +85,7 @@ func (scenario *scenarioState) aResourceTypeXCalledYExistsInNamespaceCalledZ(res
 	// TODO: This implementation is coupled to Azure. How should we deal with this when segregating service pack?
 
 	var foundInNamespace bool
-	var resource connection.APIResource
+	var resource k8sConnection.APIResource
 	var findErr error
 	// Validate input
 	switch resourceType {
@@ -123,7 +116,7 @@ func (scenario *scenarioState) aResourceTypeXCalledYExistsInNamespaceCalledZ(res
 	payload = struct {
 		CustomResourceType string
 		CustomResourceName string
-		Resource           connection.APIResource
+		Resource           k8sConnection.APIResource
 	}{
 		CustomResourceType: resourceType,
 		CustomResourceName: resourceName,
@@ -254,7 +247,7 @@ func (scenario *scenarioState) anAttemptToObtainAnAccessTokenFromThatPodShouldX(
 	cmd := "curl http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fmanagement.azure.com%2F -H Metadata:true -s"
 
 	stepTrace.WriteString(fmt.Sprintf("Attempt to run command in the pod: '%s'; ", cmd))
-	_, stdOut, _, cmdErr := conn.ExecCommand(cmd, scenario.namespace, podName)
+	_, stdOut, _, cmdErr := connection.Kubernetes.ExecCommand(cmd, scenario.namespace, podName)
 
 	// Validate that no internal error occurred during execution of curl command
 	if cmdErr != nil {
@@ -318,7 +311,7 @@ func (scenario *scenarioState) iCreateAnAzureIdentityBindingCalledInANondefaultN
 		Namespace                   string
 		AzureIdentityBindingName    string
 		AzureIdentityName           string
-		CreatedAzureIdentityBinding connection.APIResource
+		CreatedAzureIdentityBinding k8sConnection.APIResource
 	}{
 		Namespace:                   probrNameSpace,
 		AzureIdentityBindingName:    aibName,
@@ -344,7 +337,7 @@ func (scenario *scenarioState) theClusterHasManagedIdentityComponentsDeployed() 
 	stepTrace.WriteString(fmt.Sprintf(
 		"Get pods from '%s' namespace; ", identityPodsNamespace))
 	// look for the mic pods
-	podList, getErr := conn.GetPodsByNamespace(identityPodsNamespace)
+	podList, getErr := connection.Kubernetes.GetPodsByNamespace(identityPodsNamespace)
 
 	if getErr != nil {
 		err = utils.ReformatError("An error occurred when trying to retrieve pods %v", err)
@@ -424,7 +417,7 @@ func (scenario *scenarioState) theExecutionOfAXCommandInsideTheMICPodIsY(command
 	identityPodsNamespace := config.Vars.ServicePacks.AKS.ManagedID.IdentityNamespace
 	stepTrace.WriteString(fmt.Sprintf(
 		"Attempt to execute command '%s' in MIC pod '%s'; ", cmd, scenario.micPodName))
-	exitCode, stdOut, _, cmdErr := conn.ExecCommand(cmd, identityPodsNamespace, scenario.micPodName)
+	exitCode, stdOut, _, cmdErr := connection.Kubernetes.ExecCommand(cmd, identityPodsNamespace, scenario.micPodName)
 
 	// Validate that no internal error occurred during execution of curl command
 	if cmdErr != nil && exitCode == -1 {
@@ -482,7 +475,7 @@ func (scenario *scenarioState) checkClusterRBACForAdminRole() error {
 	//this is the role definition name for rolename "Azure Kubernetes Service Cluster Admin Role"
 	roleDefName := "0ab0b1a8-8aac-4efd-b8c2-3ee1fb270be8"
 
-	caRoleAssigned, err := scenario.AZConnection.ClusterHasRoleAssignment(config.Vars.ServicePacks.AKS.ResourceGroupName, config.Vars.ServicePacks.AKS.ClusterName, roleDefName)
+	caRoleAssigned, err := connection.Azure.ClusterHasRoleAssignment(config.Vars.ServicePacks.AKS.ResourceGroupName, config.Vars.ServicePacks.AKS.ClusterName, roleDefName)
 
 	if err != nil {
 		return err
@@ -510,7 +503,7 @@ func (scenario *scenarioState) checkCannotObtainClusterAdminCredentials() error 
 		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
 
-	_, credsErr := scenario.AZConnection.GetManagedClusterAdminCredentials(config.Vars.ServicePacks.AKS.ResourceGroupName, config.Vars.ServicePacks.AKS.ClusterName)
+	_, credsErr := connection.Azure.GetManagedClusterAdminCredentials(config.Vars.ServicePacks.AKS.ResourceGroupName, config.Vars.ServicePacks.AKS.ClusterName)
 
 	if credsErr != nil {
 		log.Printf("[DEBUG] Error trying to get cluster admin credentials: %v", err)
@@ -544,18 +537,6 @@ func (probe probeStruct) Path() string {
 // test handler as part of the init() function.
 func (probe probeStruct) ProbeInitialize(ctx *godog.TestSuiteContext) {
 	ctx.BeforeSuite(func() {
-		//conn = connection.Get()
-		conn = connection.NewConnection(config.Vars.ServicePacks.Kubernetes.KubeConfigPath, config.Vars.ServicePacks.Kubernetes.KubeContext, config.Vars.ServicePacks.Kubernetes.ProbeNamespace)
-		azureK8S = aks.NewAKS(conn)
-
-		scenario.AZConnection = azureconnection.NewAzureConnection(
-			context.Background(),
-			azureutil.SubscriptionID(),
-			azureutil.TenantID(),
-			azureutil.ClientID(),
-			azureutil.ClientSecret(),
-		)
-
 		//setup AzureIdentity stuff ..??  Or should this be a pre-test setup
 	})
 
@@ -611,7 +592,7 @@ func beforeScenario(s *scenarioState, probeName string, gs *godog.Scenario) {
 func afterScenario(scenario scenarioState, probe probeStruct, gs *godog.Scenario, err error) {
 	if config.Vars.ServicePacks.Kubernetes.KeepPods == "false" {
 		for _, podName := range scenario.pods {
-			err = conn.DeletePodIfExists(podName, scenario.namespace, probe.Name())
+			err = connection.Kubernetes.DeletePodIfExists(podName, scenario.namespace, probe.Name())
 			if err != nil {
 				log.Printf(fmt.Sprintf("[ERROR] Could not retrieve pod from namespace '%s' for deletion: %s", scenario.namespace, err))
 			}
@@ -621,16 +602,16 @@ func afterScenario(scenario scenarioState, probe probeStruct, gs *godog.Scenario
 }
 
 func (scenario *scenarioState) createPodfromObject(podObject *apiv1.Pod) (createdPodObject *apiv1.Pod, err error) {
-	createdPodObject, err = conn.CreatePodFromObject(podObject, Probe.Name())
+	createdPodObject, err = connection.Kubernetes.CreatePodFromObject(podObject, Probe.Name())
 	if err == nil {
 		scenario.pods = append(scenario.pods, createdPodObject.ObjectMeta.Name)
 	}
 	return
 }
 
-func azureIdentityExistsInNamespace(azureIdentityName, namespace string) (exists bool, resource connection.APIResource, err error) {
+func azureIdentityExistsInNamespace(azureIdentityName, namespace string) (exists bool, resource k8sConnection.APIResource, err error) {
 
-	resource, getError := azureK8S.GetIdentityByNameAndNamespace(azureIdentityName, namespace)
+	resource, getError := connection.AKS.GetIdentityByNameAndNamespace(azureIdentityName, namespace)
 	if getError != nil {
 		if errors.IsStatusCode(404, getError) {
 			exists = false
@@ -644,9 +625,9 @@ func azureIdentityExistsInNamespace(azureIdentityName, namespace string) (exists
 	return
 }
 
-func azureIdentityBindingExistsInNamespace(azureIdentityBindingName, namespace string) (exists bool, resource connection.APIResource, err error) {
+func azureIdentityBindingExistsInNamespace(azureIdentityBindingName, namespace string) (exists bool, resource k8sConnection.APIResource, err error) {
 
-	resource, getError := azureK8S.GetIdentityBindingByNameAndNamespace(azureIdentityBindingName, namespace)
+	resource, getError := connection.AKS.GetIdentityBindingByNameAndNamespace(azureIdentityBindingName, namespace)
 	if getError != nil {
 		if errors.IsStatusCode(404, getError) {
 			exists = false
@@ -661,9 +642,9 @@ func azureIdentityBindingExistsInNamespace(azureIdentityBindingName, namespace s
 }
 
 // azureCreateAIB creates an AzureIdentityBinding in the cluster
-func azureCreateAIB(namespace, aibName, aiName string) (aibResource connection.APIResource, err error) {
+func azureCreateAIB(namespace, aibName, aiName string) (aibResource k8sConnection.APIResource, err error) {
 
-	resource, createErr := azureK8S.CreateAIB(namespace, aibName, aiName)
+	resource, createErr := connection.AKS.CreateAIB(namespace, aibName, aiName)
 	if errors.IsStatusCode(409, createErr) { // Already Exists
 		// TODO: Delete and recreate ?
 		createErr = nil

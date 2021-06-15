@@ -7,22 +7,21 @@ import (
 	"strings"
 
 	"github.com/probr/probr-pack-aks/internal/config"
+	"github.com/probr/probr-pack-aks/internal/connection"
 	"github.com/probr/probr-sdk/audit"
 	"github.com/probr/probr-sdk/probeengine"
 	"github.com/probr/probr-sdk/probeengine/opa"
-	"github.com/probr/probr-sdk/providers/azure/connection"
 	"github.com/probr/probr-sdk/utils"
 )
 
 // ScenarioState is the base struct for handling state across steps in a scenario
 type ScenarioState struct {
-	Name         string
-	CurrentStep  string
-	Audit        *audit.Scenario
-	Probe        *audit.Probe
-	Ctx          context.Context
-	Tags         map[string]*string
-	AZConnection connection.Azure
+	Name        string
+	CurrentStep string
+	Audit       *audit.Scenario
+	Probe       *audit.Probe
+	Ctx         context.Context
+	Tags        map[string]*string
 	//additional variables to hold state goes here
 }
 
@@ -66,12 +65,6 @@ func OPAProbe(opaFuncName string, aksJSON []byte, scenario *ScenarioState) (err 
 		}
 		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
-
-	payload = struct {
-		Placeholder string
-	}{
-		"placeholder",
-	}
 
 	stepTrace.WriteString(fmt.Sprintf("Use OPA function %s to evaluate this cluster; ", opaFuncName))
 
@@ -117,32 +110,30 @@ func AnAzureKubernetesClusterWeCanReadTheConfigurationOf(scenario *ScenarioState
 		}
 		scenario.Audit.AuditScenarioStep(scenario.CurrentStep, stepTrace.String(), payload, err)
 	}()
-
-	payload = struct {
-		Placeholder string
-	}{
-		"placeholder",
+	if len(connection.Errors()) > 0 {
+		payload = connection.Errors()
+		return nil, utils.ReformatError("Failed to connect to AKS cluster")
 	}
 
 	stepTrace.WriteString("Get the configuration of the AKS cluster; ")
-
+	payload = struct {
+		ResourceGroup string
+		ClusterName   string
+	}{
+		config.Vars.ServicePacks.AKS.ResourceGroupName,
+		config.Vars.ServicePacks.AKS.ClusterName,
+	}
 	json, err = getClusterConfigJSON(scenario)
-
-	if err != nil {
-		log.Printf("Error loading JSON: %v", err)
-		return
-	}
-
-	if len(json) == 0 {
-		err = fmt.Errorf("aksJSON empty")
-	}
 	return
 }
 
 func getClusterConfigJSON(scenario *ScenarioState) (json []byte, err error) {
-	json, err = scenario.AZConnection.GetManagedClusterJSON(config.Vars.ServicePacks.AKS.ResourceGroupName, config.Vars.ServicePacks.AKS.ClusterName)
+	if connection.Azure == nil {
+		log.Printf("[ERROR] Failed to establish Azure connection.")
+	}
+	json, err = connection.Azure.GetManagedClusterJSON(config.Vars.ServicePacks.AKS.ResourceGroupName, config.Vars.ServicePacks.AKS.ClusterName)
 	if err != nil {
-		log.Printf("Error loading JSON: %v", err)
+		log.Printf("[ERROR] Failed to load JSON: %v", err)
 		return
 	}
 

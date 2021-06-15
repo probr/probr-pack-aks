@@ -7,6 +7,7 @@ import (
 
 	"github.com/probr/probr-pack-aks/internal/common"
 	"github.com/probr/probr-pack-aks/internal/config"
+	"github.com/probr/probr-pack-aks/internal/connection"
 	"github.com/probr/probr-sdk/providers/kubernetes/constructors"
 	"github.com/probr/probr-sdk/utils"
 )
@@ -32,7 +33,7 @@ func (scenario *scenarioState) aKubernetesClusterIsDeployed() error {
 		config.Vars.ServicePacks.Kubernetes.KubeContext,
 	}
 
-	err = kConnection.ClusterIsDeployed() // Must be assigned to 'err' be audited
+	err = connection.Kubernetes.ClusterIsDeployed() // Must be assigned to 'err' be audited
 	return err
 }
 
@@ -56,8 +57,8 @@ func (scenario *scenarioState) iCreateAPodWhichDynamicallyCreatesAnAzureDisk() e
 	constructors.AddPVCToPod(podObject, pvcObject)
 
 	stepTrace.WriteString("Create pod from spec; ")
-	createdPVCObject, pvcCreationErr := kConnection.CreatePVCFromObject(pvcObject, Probe.Name())
-	createdPodObject, podCreationErr := kConnection.CreatePodFromObject(podObject, Probe.Name()) // Pod name is saved to scenario state if successful
+	createdPVCObject, pvcCreationErr := connection.Kubernetes.CreatePVCFromObject(pvcObject, Probe.Name())
+	createdPodObject, podCreationErr := connection.Kubernetes.CreatePodFromObject(podObject, Probe.Name()) // Pod name is saved to scenario state if successful
 	if podCreationErr != nil {
 		return podCreationErr
 	}
@@ -72,7 +73,7 @@ func (scenario *scenarioState) iCreateAPodWhichDynamicallyCreatesAnAzureDisk() e
 }
 
 func (scenario *scenarioState) theDiskIsEncryptedUsingCustomerManagedKeys() error {
-	pvc, err := kConnection.GetPVCFromPVCName(scenario.pvcs[0], scenario.namespace)
+	pvc, err := connection.Kubernetes.GetPVCFromPVCName(scenario.pvcs[0], scenario.namespace)
 	if err != nil {
 		log.Printf("[DEBUG] Error getting PVC from PVC Name")
 		return err
@@ -86,12 +87,12 @@ func (scenario *scenarioState) theDiskIsEncryptedUsingCustomerManagedKeys() erro
 		log.Printf("[DEBUG] PVC Status.Phase: %s; Waiting...", pvc.Status.Phase)
 
 		time.Sleep(2 * time.Second)
-		pvc, _ = kConnection.GetPVCFromPVCName(scenario.pvcs[0], scenario.namespace)
+		pvc, _ = connection.Kubernetes.GetPVCFromPVCName(scenario.pvcs[0], scenario.namespace)
 	}
 
 	log.Printf("[DEBUG] PVC name is %s. PV name is %s.", scenario.pvcs[0], pvc.Spec.VolumeName)
 
-	pv, err := kConnection.GetPVFromPVName(pvc.Spec.VolumeName)
+	pv, err := connection.Kubernetes.GetPVFromPVName(pvc.Spec.VolumeName)
 	if err != nil {
 		log.Printf("[DEBUG] Error getting PV from PV Name")
 		log.Printf("[DEBUG] PVC trace: %v", pvc)
@@ -100,10 +101,10 @@ func (scenario *scenarioState) theDiskIsEncryptedUsingCustomerManagedKeys() erro
 
 	log.Printf("[DEBUG] Disk URI is %s", pv.Spec.AzureDisk.DataDiskURI)
 
-	rgName, diskName := scenario.AZConnection.ParseDiskDetails(pv.Spec.AzureDisk.DataDiskURI)
+	rgName, diskName := connection.Azure.ParseDiskDetails(pv.Spec.AzureDisk.DataDiskURI)
 	log.Printf("[DEBUG] Disk details are rgName: %s. diskName: %s", rgName, diskName)
 
-	azureDisk, err := scenario.AZConnection.GetDisk(rgName, diskName)
+	azureDisk, err := connection.Azure.GetDisk(rgName, diskName)
 	if err != nil {
 		log.Printf("Error getting disk client")
 		return err
@@ -120,7 +121,6 @@ func (scenario *scenarioState) theDiskIsEncryptedUsingCustomerManagedKeys() erro
 }
 
 func (scenario *scenarioState) anAzureKubernetesClusterWeCanReadTheConfigurationOf() (err error) {
-
 	aksJSON, err = common.AnAzureKubernetesClusterWeCanReadTheConfigurationOf(scenario.GetScenarioState())
 
 	return
