@@ -1,6 +1,8 @@
 # Probr AKS Service Pack
 
-The [Probr](https://github.com/probr/probr-core) AKS Service pack compliments the [Kubernetes service pack](https://github.com/probr/probr-pack-kubernetes) with Azure Kubernetes Service (AKS)-specific compliance checks.
+The [Probr](https://github.com/probr/probr) AKS Service pack compliments the [Kubernetes service pack](https://github.com/probr/probr-pack-kubernetes) with Azure Kubernetes Service (AKS)-specific compliance checks.
+
+Click [here](./COVERAGE.md) to see the current state of the probes in this pack.
 
 ## To Build
 
@@ -16,7 +18,7 @@ Move the `aks` binary into your probr service pack location (default is `${HOME}
 ## Pre-Requisites
 
 You will need
-1. Probr Core (https://github.com/probr/probr-core)
+1. Probr Core (https://github.com/probr/probr)
 1. An AKS Cluster
 1. An active kubeconfig against the cluster, that can deploy into the probe namespace (see config below. Default is probr-general-test-ns)
 1. A service principle that has the "Reader" Azure role on the cluster
