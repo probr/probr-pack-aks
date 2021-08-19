@@ -1,12 +1,14 @@
 # Probr AKS Service Pack
 
-The [Probr](https://github.com/probr/probr-core) AKS Service pack compliments the [Kubernetes service pack](https://github.com/probr/probr-pack-kubernetes) with Azure Kubernetes Service (AKS)-specific compliance checks.
+The [Probr](https://github.com/citihub/probr-core) AKS Service pack compliments the [Kubernetes service pack](https://github.com/citihub/probr-pack-kubernetes) with Azure Kubernetes Service (AKS)-specific compliance checks.
+
+Click [here](./COVERAGE.md) to see the current state of the probes in this pack.
 
 ## To Build
 
 The following will build a binary named "aks":
 ```
-git clone https://github.com/probr/probr-pack-aks.git
+git clone https://github.com/citihub/probr-pack-aks.git
 cd probr-pack-aks
 make binary
 ```
@@ -16,7 +18,7 @@ Move the `aks` binary into your probr service pack location (default is `${HOME}
 ## Pre-Requisites
 
 You will need
-1. Probr Core (https://github.com/probr/probr-core)
+1. Probr Core (https://github.com/citihub/probr-core)
 1. An AKS Cluster
 1. An active kubeconfig against the cluster, that can deploy into the probe namespace (see config below. Default is probr-general-test-ns)
 1. A service principle that has the "Reader" Azure role on the cluster
@@ -35,7 +37,7 @@ Run:
   - "aks"
 ServicePacks:
   Kubernetes:
-    AuthorisedContainerImage: "yourprivateregistry.io/probr/probr-probe"
+    AuthorisedContainerImage: "yourprivateregistry.io/citihub/probr-probe"
   AKS:
     ClusterName: "your-clustername-here"
     ResourceGroupName: "your-resource-group-name-here"      
@@ -59,7 +61,7 @@ ServicePacks:
   Kubernetes:
     KubeConfig: "location of your kubeconfig if not the default"
     KubeContext: "specific kubecontext if not the current context"
-    AuthorisedContainerImage: "yourprivateregistry.io/probr/probr-probe"
+    AuthorisedContainerImage: "yourprivateregistry.io/citihub/probr-probe"
     ProbeNamespace: "namespace Probr deploys into. Defaults to 'probr-general-test-ns'"
   AKS:
     ClusterName: "your-clustername-here"
