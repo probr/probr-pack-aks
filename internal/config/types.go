@@ -1,5 +1,7 @@
 package config
 
+import kc "github.com/probr/probr-sdk/providers/kubernetes/config"
+
 type varOptions struct {
 	VarsFile     string
 	Verbose      bool
@@ -7,16 +9,8 @@ type varOptions struct {
 }
 
 type servicePacks struct {
-	Kubernetes kubernetes `yaml:"Kubernetes"`
-	AKS        aks        `yaml:"AKS"`
-}
-
-type kubernetes struct {
-	KeepPods                 string `yaml:"KeepPods"` // TODO: Change type to bool, this would allow us to remove logic from kubernetes.GetKeepPodsFromConfig()
-	KubeConfigPath           string `yaml:"KubeConfig"`
-	KubeContext              string `yaml:"KubeContext"`
-	AuthorisedContainerImage string `yaml:"AuthorisedContainerImage"`
-	ProbeNamespace           string `yaml:"ProbeNamespace"`
+	AKS        aks `yaml:"AKS"`
+	Kubernetes kc.Kubernetes
 }
 
 type aks struct {
