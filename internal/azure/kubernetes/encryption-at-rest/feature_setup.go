@@ -9,13 +9,10 @@ import (
 
 	"github.com/probr/probr-pack-aks/internal/common"
 	"github.com/probr/probr-pack-aks/internal/config"
+	"github.com/probr/probr-pack-aks/internal/connection"
 	"github.com/probr/probr-pack-aks/internal/summary"
 
 	"github.com/probr/probr-sdk/probeengine"
-
-	azureutil "github.com/probr/probr-sdk/providers/azure"
-	azureconnection "github.com/probr/probr-sdk/providers/azure/connection"
-	k8sconnection "github.com/probr/probr-sdk/providers/kubernetes/connection"
 )
 
 type scenarioState struct {
@@ -33,8 +30,7 @@ type probeStruct struct {
 
 // Probe ...
 var Probe probeStruct
-var scenario scenarioState               // Local container of scenario state
-var kConnection k8sconnection.Connection // Provides functionality to interact with Kubernetes
+var scenario scenarioState // Local container of scenario state
 var aksJSON []byte
 
 func beforeScenario(s *scenarioState, probeName string, gs *godog.Scenario) {
@@ -61,18 +57,6 @@ func (probe probeStruct) Path() string {
 func (probe probeStruct) ProbeInitialize(ctx *godog.TestSuiteContext) {
 
 	ctx.BeforeSuite(func() {
-
-		scenario.AZConnection = azureconnection.NewAzureConnection(
-			context.Background(),
-			azureutil.SubscriptionID(),
-			azureutil.TenantID(),
-			azureutil.ClientID(),
-			azureutil.ClientSecret(),
-		)
-
-		//TODO make this part of the scenario object
-		kConnection = k8sconnection.NewConnection(config.Vars.ServicePacks.Kubernetes.KubeConfigPath, config.Vars.ServicePacks.Kubernetes.KubeContext, config.Vars.ServicePacks.Kubernetes.ProbeNamespace)
-
 	})
 
 	ctx.AfterSuite(func() {
@@ -120,7 +104,7 @@ func teardown() {
 	//delete any resources you created here
 	//if config.Vars.ServicePacks.Kubernetes.KeepPods == "false" {
 	for _, podName := range scenario.pods {
-		err := kConnection.DeletePodIfExists(podName, scenario.namespace, Probe.Name())
+		err := connection.Kubernetes.DeletePodIfExists(podName, scenario.namespace, Probe.Name())
 		if err != nil {
 			log.Printf(fmt.Sprintf("[ERROR] Could not retrieve pod from namespace '%s' for deletion: %s", scenario.namespace, err))
 		}
@@ -128,7 +112,7 @@ func teardown() {
 	//}
 
 	for _, pvcName := range scenario.pvcs {
-		err := kConnection.DeletePVCIfExists(pvcName, scenario.namespace, Probe.Name())
+		err := connection.Kubernetes.DeletePVCIfExists(pvcName, scenario.namespace, Probe.Name())
 		if err != nil {
 			log.Printf(fmt.Sprintf("[ERROR] Could not retrieve PVC from namespace '%s' for deletion: %s", scenario.namespace, err))
 		}

@@ -10,8 +10,8 @@ import (
 	"syscall"
 
 	"github.com/probr/probr-pack-aks/internal/config"
-	//"github.com/probr/probr-pack-kubernetes/internal/connection"
-	"github.com/probr/probr-pack-aks/internal/summary" //TODO:
+	"github.com/probr/probr-pack-aks/internal/connection"
+	"github.com/probr/probr-pack-aks/internal/summary"
 	"github.com/probr/probr-pack-aks/pack"
 
 	audit "github.com/probr/probr-sdk/audit"
@@ -121,9 +121,8 @@ func ProbrCoreLogic() (err error) {
 	defer sdkConfig.GlobalConfig.CleanupTmp()
 	setupCloseHandler() // Sigterm protection
 	config.Vars.Init()
+	connection.Init()
 	summary.State = audit.NewSummaryState(ServicePackName)
-
-	//connection.Connect()
 
 	store := probeengine.NewProbeStore(ServicePackName, config.Vars.Tags(), &summary.State)
 	s, err := store.RunAllProbes(pack.GetProbes())

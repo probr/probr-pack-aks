@@ -9,8 +9,6 @@ import (
 
 	"github.com/probr/probr-pack-aks/internal/common"
 	"github.com/probr/probr-sdk/probeengine"
-	azureutil "github.com/probr/probr-sdk/providers/azure"
-	"github.com/probr/probr-sdk/providers/azure/connection"
 )
 
 type scenarioState struct {
@@ -49,15 +47,6 @@ func (probe probeStruct) Path() string {
 func (probe probeStruct) ProbeInitialize(ctx *godog.TestSuiteContext) {
 
 	ctx.BeforeSuite(func() {
-
-		scenario.AZConnection = connection.NewAzureConnection(
-			context.Background(),
-			azureutil.SubscriptionID(),
-			azureutil.TenantID(),
-			azureutil.ClientID(),
-			azureutil.ClientSecret(),
-		)
-
 	})
 
 	ctx.AfterSuite(func() {

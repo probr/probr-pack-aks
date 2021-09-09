@@ -24,9 +24,10 @@ func (ctx *varOptions) Init() (err error) {
 	}
 	sdkConfig.GlobalConfig.VarsFile = ctx.VarsFile
 	sdkConfig.GlobalConfig.Init()
-	sdkConfig.GlobalConfig.CloudProviders.Azure.SetEnvAndDefaults()
+	sdkConfig.GlobalConfig.PrepareOutputDirectory("audit", "cucumber")
 
-	ctx.ServicePacks.Kubernetes.SetEnvAndDefaults()
+	sdkConfig.GlobalConfig.CloudProviders.Azure.SetEnvAndDefaults()
+	ctx.ServicePacks.Kubernetes.setEnvAndDefaults()
 	ctx.ServicePacks.AKS.setEnvAndDefaults()
 
 	log.Printf("[DEBUG] Config initialized by %s", utils.CallerName(1))
