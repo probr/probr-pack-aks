@@ -1,4 +1,4 @@
-module github.com/probr/probr-pack-aks
+module github.com/probr/probr-pack
 
 go 1.14
 
